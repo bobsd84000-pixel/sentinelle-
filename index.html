@@ -50,6 +50,8 @@ input::placeholder{color:var(--sourd)}
 .pv li span{font-size:var(--t-petit);color:var(--pv-sourd)}
 .etat{grid-row:1/3;grid-column:2;align-self:center;font:800 var(--t-mini) 'Public Sans',sans-serif;padding:4px 10px;border-radius:var(--r-etat)}
 .e-ok{background:var(--ok-bg);color:var(--ok-fg)}.e-mi{background:var(--mi-bg);color:var(--mi-fg)}.e-ma{background:var(--ma-bg);color:var(--ma-fg)}
+.pv .gc{grid-column:1;justify-self:start;margin-top:6px;font:700 var(--t-mini) 'Public Sans',sans-serif;background:none;border:1px solid var(--pv-filet);color:var(--pv-encre);border-radius:var(--r-etat);padding:4px 10px;cursor:pointer}
+.pv .cs{grid-column:1/-1;font-size:var(--t-petit);color:var(--pv-encre);white-space:pre-line;border-left:3px solid var(--pv-tampon);padding:4px 0 4px 10px;margin-top:6px}
 .pv small{display:block;margin-top:14px;font-size:var(--t-mini);color:var(--pv-sourd)}
 .tampon{position:absolute;right:-14px;top:-26px;width:112px;height:112px;border:5px solid var(--pv-tampon);color:var(--pv-tampon);border-radius:var(--r-tampon);display:grid;place-items:center;transform:rotate(-9deg);background:var(--pv-papier);text-align:center;line-height:1}
 .tampon b{font:700 var(--t-tampon)/1 'Zilla Slab',serif;display:block}
@@ -100,9 +102,9 @@ footer{border-top:1px solid var(--filet);padding:32px 0 48px;color:var(--sourd);
 <div class="pv-tete"><b id="dom">boulangerie-exemple.fr</b>Rapport hebdomadaire d'exemple</div>
 <ul>
 <li><strong>Certificat du site</strong><span>Valide encore 61 jours</span><em class="etat e-ok">OK</em></li>
-<li><strong>Protection des e-mails</strong><span>DMARC absent : n'importe qui peut écrire en votre nom</span><em class="etat e-ma">Urgent</em></li>
-<li><strong>Faux sites à votre nom</strong><span id="faux">1 domaine proche repéré : boulangerie-exemple-connexion.fr</span><em class="etat e-mi">À corriger</em></li>
-<li><strong>Réglages de sécurité</strong><span>2 en-têtes de sécurité manquants</span><em class="etat e-mi">À corriger</em></li>
+<li data-type="dmarc"><strong>Protection des e-mails</strong><span>DMARC absent : n'importe qui peut écrire en votre nom</span><em class="etat e-ma">Urgent</em><button class="gc" type="button">Comment corriger ?</button></li>
+<li data-type="faux"><strong>Faux sites à votre nom</strong><span id="faux">1 domaine proche repéré : boulangerie-exemple-connexion.fr</span><em class="etat e-mi">À corriger</em><button class="gc" type="button">Comment corriger ?</button></li>
+<li data-type="entetes"><strong>Réglages de sécurité</strong><span>2 en-têtes de sécurité manquants</span><em class="etat e-mi">À corriger</em><button class="gc" type="button">Comment corriger ?</button></li>
 </ul>
 <small>Rapport d'exemple. Les résultats réels arrivent après vérification de votre domaine.</small>
 </article>
@@ -186,8 +188,18 @@ document.getElementById('dom').textContent=v;
 document.getElementById('faux').textContent='1 domaine proche repéré : '+p.join('.')+'-connexion.'+t;
 a.textContent='Voici à quoi ressemblera le rapport de '+v+'. Les résultats affichés sont un exemple.';a.className='aide';
 tp.classList.remove('pose');void tp.offsetWidth;tp.classList.add('pose');
+document.querySelectorAll('.pv .cs').forEach(function(c){c.remove()});
 document.querySelector('.pv').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'center'})};
 })();
+
+document.querySelector('.pv ul').addEventListener('click',function(e){
+var b=e.target.closest('.gc');if(!b)return;var li=b.closest('li'),o=li.querySelector('.cs');
+if(!o){o=document.createElement('p');o.className='cs';o.setAttribute('aria-live','polite');li.appendChild(o)}
+b.disabled=true;o.textContent='Préparation du conseil…';
+fetch('/api/conseil',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:li.dataset.type,domaine:document.getElementById('dom').textContent})})
+.then(function(r){return r.json()}).then(function(d){o.textContent=d.conseil||d.error||'Erreur'})
+.catch(function(){o.textContent='Service indisponible.'}).finally(function(){b.disabled=false});
+});
 </script>
 </body>
 </html>

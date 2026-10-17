@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /api/
+Allow: /
+
+Sitemap: https://sentinelle-plum.vercel.app/sitemap.xml
